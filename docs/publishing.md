@@ -128,3 +128,7 @@ Then remove `packages/sdk` and the `sdk:build` script (root `package.json:15`) f
 the noonmark repo, since this repo is the source of truth. Nothing in the main repo
 imports `@noonmark/sdk` (checked by grep over `src`, `test`, `admin` and `console`),
 so the removal is safe. The old `packages/sdk/README.md` still says `@forma/sdk`.
+
+- **`EUSAGE: Automatic provenance generation not supported for provider: null`.**
+  Provenance only works inside GitHub Actions. `package.json` must not set
+  `publishConfig.provenance`; the release workflow passes `--provenance` itself.
