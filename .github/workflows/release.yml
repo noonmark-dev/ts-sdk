@@ -1,0 +1,57 @@
+name: Release
+
+# Publishes to npm when a tag v<version> is pushed. Auth is npm trusted
+# publishing (OIDC): no NPM_TOKEN or other secret is used.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  id-token: write # npm trusted publishing + provenance
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Provenance needs a public repository
+        if: ${{ github.event.repository.private }}
+        run: |
+          echo "::error::This repository is private. npm provenance is not supported for private repositories, so publishing with provenance would fail. Make the repo public (see docs/publishing.md)."
+          exit 1
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Trusted publishing needs npm >= 11.5.1.
+      - name: Ensure a recent npm
+        run: |
+          npm i -g npm@latest
+          npm -v
+
+      - name: Tag must equal v + package.json version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version v$VERSION"
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+      - run: npm run smoke
+      - run: npm pack --dry-run
+
+      - name: Publish
+        run: npm publish --provenance --access public
