@@ -109,8 +109,22 @@ patch release.
 
 ## After first publish: follow-ups in the main noonmark repo
 
-These are tracked in the main repo (`docs/publishing-sdk.md` there). Summary:
-the SDK claims on the site stay "not on npm" until `npm view @noonmark/sdk`
-succeeds; then flip them, and remove `packages/sdk` (and the `sdk:build` script
-in the root `package.json`) from the noonmark repo, since this repo is now the
-source of truth.
+Do these in the main noonmark repo only once `npm view @noonmark/sdk` succeeds.
+Until then the site should keep saying the SDK is not on npm, and
+`content/docs/sdk.mdx` should carry a "not published yet" note, because it tells
+readers to `npm i` a package that does not exist.
+
+Lines that assume the package is published (checked 2026-09-30):
+
+- `content/docs/sdk.mdx:9` (`npm i @noonmark/sdk`)
+- `content/docs/index.mdx:18-19` (SDK card)
+- `content/docs/concepts.mdx:26`
+- `src/app/compare/page.tsx:448` (the Jotform row: "its SDK is not on npm yet")
+- `src/app/SKILL.md/route.ts:49-52`
+- `src/app/studio/forms/[id]/page.tsx:46` and `:83` (code snippets)
+- `README.md:18-21` and `:49`
+
+Then remove `packages/sdk` and the `sdk:build` script (root `package.json:15`) from
+the noonmark repo, since this repo is the source of truth. Nothing in the main repo
+imports `@noonmark/sdk` (checked by grep over `src`, `test`, `admin` and `console`),
+so the removal is safe. The old `packages/sdk/README.md` still says `@forma/sdk`.
